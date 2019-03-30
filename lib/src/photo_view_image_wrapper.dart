@@ -232,10 +232,10 @@ class _PhotoViewImageWrapperState extends State<PhotoViewImageWrapper>
     _rotationAnimationController = AnimationController(vsync: this)
       ..addListener(handleRotationAnimation);
 
-    widget.controller.outputStateStream.listen(scaleStateListener);
+    widget.controller.addListener(scaleStateListener);
   }
 
-  void scaleStateListener(PhotoViewControllerValue value) {
+  void scaleStateListener() {
     if (widget.controller.prevValue.scaleState !=
             widget.controller.scaleState &&
         widget.controller.scaleState != PhotoViewScaleState.zooming) {
@@ -295,7 +295,7 @@ class _PhotoViewImageWrapperState extends State<PhotoViewImageWrapper>
   Widget build(BuildContext context) {
     return StreamBuilder(
         stream: widget.controller.outputStateStream,
-        initialData: widget.controller.prevValue,
+        initialData: widget.controller.initial,
         builder: (BuildContext context,
             AsyncSnapshot<PhotoViewControllerValue> snapshot) {
           if (snapshot.hasData) {

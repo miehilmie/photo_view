@@ -18,10 +18,15 @@ typedef ScaleStateListener = void Function(double prevScale, double nextScale);
 ///
 /// The default implementation used by [PhotoView] is [PhotoViewController].
 abstract class PhotoViewControllerBase<T extends PhotoViewControllerValue> {
-  /// The output for state updates. Usually a broadcast [Stream]
+
+  void addListener(VoidCallback listener);
+
   Stream<T> get outputStateStream;
 
-  /// The state value before the last change or the initial state if trhe state has not been changed.
+  /// The state value of the initial state.
+  T initial;
+
+  /// The state value before the last change.
   T prevValue;
 
   /// Resets the state to the initial value;
@@ -102,8 +107,7 @@ class PhotoViewControllerValue {
 ///
 /// For details of fields and methods, check [PhotoViewControllerBase].
 ///
-class PhotoViewController extends ValueNotifier<PhotoViewControllerValue>
-    implements PhotoViewControllerBase<PhotoViewControllerValue> {
+class PhotoViewController extends ValueNotifier<PhotoViewControllerValue> implements PhotoViewControllerBase<PhotoViewControllerValue> {
   PhotoViewController(
       {Offset initialPosition = Offset.zero, double initialRotation = 0.0})
       : super(PhotoViewControllerValue(
@@ -115,36 +119,34 @@ class PhotoViewController extends ValueNotifier<PhotoViewControllerValue>
             rotationFocusPoint: null)) {
     initial = value;
     prevValue = initial;
+
     _outputCtrl = StreamController<PhotoViewControllerValue>.broadcast();
     _outputCtrl.sink.add(initial);
     super.addListener(_changeListener);
   }
-
-  PhotoViewControllerValue initial;
-
-  StreamController<PhotoViewControllerValue> _outputCtrl;
-
-  @override
-  Stream<PhotoViewControllerValue> get outputStateStream => _outputCtrl.stream;
-
-  @override
-  PhotoViewControllerValue prevValue;
 
   @override
   void reset() {
     value = initial;
   }
 
+  @override
+  PhotoViewControllerValue initial;
+
+  @override
+  PhotoViewControllerValue prevValue;
+
+  // stream proxy
+  StreamController<PhotoViewControllerValue> _outputCtrl;
+
+  @override
+  Stream<PhotoViewControllerValue> get outputStateStream => _outputCtrl.stream;
+
   void _changeListener() {
     _outputCtrl.sink.add(value);
   }
 
-  @override
-  void dispose() {
-    _outputCtrl.close();
-    super.dispose();
-  }
-
+  // position value proxy
   @override
   set position(Offset position) {
     if (value.position == position) {
@@ -162,6 +164,7 @@ class PhotoViewController extends ValueNotifier<PhotoViewControllerValue>
   @override
   Offset get position => value.position;
 
+  // scale value proxy
   @override
   set scale(double scale) {
     if (value.scale == scale) {
@@ -179,6 +182,7 @@ class PhotoViewController extends ValueNotifier<PhotoViewControllerValue>
   @override
   double get scale => value.scale;
 
+  // rotation value proxy
   @override
   set rotation(double rotation) {
     if (value.rotation == rotation) {
@@ -196,23 +200,7 @@ class PhotoViewController extends ValueNotifier<PhotoViewControllerValue>
   @override
   double get rotation => value.rotation;
 
-  @override
-  set scaleState(PhotoViewScaleState scaleState) {
-    if (value.scaleState == scaleState) {
-      return;
-    }
-    prevValue = value;
-    value = PhotoViewControllerValue(
-        position: position,
-        scale: scale,
-        rotation: rotation,
-        scaleState: scaleState,
-        rotationFocusPoint: rotationFocusPoint);
-  }
-
-  @override
-  PhotoViewScaleState get scaleState => value.scaleState;
-
+  // rotationFocusPoint value proxy
   @override
   set rotationFocusPoint(Offset rotationFocusPoint) {
     if (value.rotationFocusPoint == rotationFocusPoint) {
@@ -229,6 +217,24 @@ class PhotoViewController extends ValueNotifier<PhotoViewControllerValue>
 
   @override
   Offset get rotationFocusPoint => value.rotationFocusPoint;
+
+  // scaleState value proxy
+  @override
+  set scaleState(PhotoViewScaleState scaleState) {
+    if (value.scaleState == scaleState) {
+      return;
+    }
+    prevValue = value;
+    value = PhotoViewControllerValue(
+        position: position,
+        scale: scale,
+        rotation: rotation,
+        scaleState: scaleState,
+        rotationFocusPoint: rotationFocusPoint);
+  }
+
+  @override
+  PhotoViewScaleState get scaleState => value.scaleState;
 
   @override
   void updateMultiple({
